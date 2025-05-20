@@ -8,8 +8,18 @@ export const TokenTypes = {
   INT: 'INT', // 1343456
 
   // 运算符
-  ASSIGN: '=',
   PLUS: '+',
+  MINUS: '-',
+  ASTERISK: '*',
+  SLASH: '/',
+  ASSIGN: '=',
+
+  // 比较符
+  BANG: '!',
+  GT: '>',
+  LT: '<',
+  EQ: '==',
+  NOT_EQ: '!=',
 
   // 分隔符
   COMMA: ',',
@@ -23,7 +33,26 @@ export const TokenTypes = {
   // 关键字
   FUNCTION: 'FUNCTION',
   LET: 'LET',
+  IF: 'IF',
+  ELSE: 'ELSE',
+  RETURN: 'RETURN',
+  TRUE: 'TRUE',
+  FALSE: 'FALSE',
 };
+
+const keywords = {
+  fn: TokenTypes.FUNCTION,
+  let: TokenTypes.LET,
+  if: TokenTypes.IF,
+  else: TokenTypes.ELSE,
+  return: TokenTypes.RETURN,
+  true: TokenTypes.TRUE,
+  false: TokenTypes.FALSE,
+};
+
+export function lookupIdent(ident) {
+  return keywords[ident] || TokenTypes.IDENT;
+}
 
 export default class Token {
   /**

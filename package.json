@@ -2,9 +2,10 @@
   "name": "js-interpreter",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "type": "module",
   "scripts": {
+    "start":"node src/main.js",
     "test": "node test/run.js"
   },
   "keywords": [],
@@ -13,5 +14,6 @@
   "packageManager": "pnpm@10.10.0",
   "dependencies": {
     "glob": "^11.0.2"
-  }
+  },
+  "devDependencies": {}
 }
