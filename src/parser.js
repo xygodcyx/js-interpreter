@@ -7,6 +7,7 @@
 
 import Token from './token.js';
 import { TokenTypes } from './token.js';
+
 import Program, {
   LetStatement,
   Identifier,
@@ -14,19 +15,32 @@ import Program, {
   ReturnStatement,
   ExpressionStatement,
   Expression,
+  IntegerLiteral,
+  PrefixExpression,
+  InfixExpression,
 } from './ast.js';
 import Lexer from './lexer.js';
 
-const Precedences = {
+const PrecedencesInt = {
   LOWEST: 1,
   EQUALS: 2,
-  LESSGREATER: 3,
+  LESS_GREATER: 3,
   SUM: 4,
   PRODUCT: 5,
   PREFIX: 6,
   CALL: 7,
 };
 
+export const precedences = {
+  [TokenTypes.EQ]: PrecedencesInt.EQUALS,
+  [TokenTypes.NOT_EQ]: PrecedencesInt.EQUALS,
+  [TokenTypes.LT]: PrecedencesInt.LESS_GREATER,
+  [TokenTypes.GT]: PrecedencesInt.LESS_GREATER,
+  [TokenTypes.PLUS]: PrecedencesInt.SUM,
+  [TokenTypes.MINUS]: PrecedencesInt.SUM,
+  [TokenTypes.SLASH]: PrecedencesInt.PRODUCT,
+  [TokenTypes.ASTERISK]: PrecedencesInt.PRODUCT,
+};
 /**
  * 解析器 Parser 类
  */
@@ -58,6 +72,20 @@ export default class Parser {
 
     // 注册前缀解析函数
     this.registerPrefix(TokenTypes.IDENT, this.parseIdentifier.bind(this));
+    this.registerPrefix(TokenTypes.INT, this.parseIntegerLiteral.bind(this));
+
+    this.registerPrefix(TokenTypes.BANG, this.parsePrefixExpression.bind(this));
+    this.registerPrefix(TokenTypes.MINUS, this.parsePrefixExpression.bind(this));
+
+    // 注册中缀解析函数
+    this.registerInfix(TokenTypes.PLUS, this.parseInfixExpression.bind(this));
+    this.registerInfix(TokenTypes.MINUS, this.parseInfixExpression.bind(this));
+    this.registerInfix(TokenTypes.SLASH, this.parseInfixExpression.bind(this));
+    this.registerInfix(TokenTypes.ASTERISK, this.parseInfixExpression.bind(this));
+    this.registerInfix(TokenTypes.EQ, this.parseInfixExpression.bind(this));
+    this.registerInfix(TokenTypes.NOT_EQ, this.parseInfixExpression.bind(this));
+    this.registerInfix(TokenTypes.LT, this.parseInfixExpression.bind(this));
+    this.registerInfix(TokenTypes.GT, this.parseInfixExpression.bind(this));
   }
 
   /**
@@ -76,6 +104,22 @@ export default class Parser {
    */
   registerInfix(tokenType, fn) {
     this.infixParseFns[tokenType] = fn;
+  }
+
+  /**
+   * 查看下一个 token 的优先级
+   * @returns {number}
+   */
+  peekPrecedence() {
+    return precedences[this.peekToken.type] ?? PrecedencesInt.LOWEST;
+  }
+
+  /**
+   * 获取当前 token 的优先级
+   * @returns {number}
+   */
+  curPrecedence() {
+    return precedences[this.curToken.type] ?? PrecedencesInt.LOWEST;
   }
 
   /**
@@ -144,7 +188,7 @@ export default class Parser {
   parseExpressionStatement() {
     const stmt = new ExpressionStatement(this.curToken);
 
-    stmt.expression = this.parseExpression(Precedences.LOWEST);
+    stmt.expression = this.parseExpression(PrecedencesInt.LOWEST);
 
     if (this.peekTokenIs(TokenTypes.SEMICOLON)) {
       this.nextToken();
@@ -154,19 +198,64 @@ export default class Parser {
   }
 
   /**
-   * @param {number} precedence
+   * 解析前缀表达式，如 -5
+   * @returns {Expression}
+   */
+  parsePrefixExpression() {
+    const expression = new PrefixExpression(this.curToken, this.curToken.literal);
+
+    this.nextToken();
+
+    expression.right = this.parseExpression(PrecedencesInt.PREFIX);
+
+    return expression;
+  }
+
+  /**
+   * 解析中缀表达式，如 5 + 5
+   * @param {Expression} left 左侧表达式
+   * @returns {Expression}
+   */
+  parseInfixExpression(left) {
+    const expression = new InfixExpression(this.curToken, left, this.curToken.literal);
+
+    const precedence = this.curPrecedence();
+    this.nextToken();
+    expression.right = this.parseExpression(precedence);
+
+    return expression;
+  }
+
+  /**
+   *@param {string} tokenType
+   */
+  noPrefixParseFnError(tokenType) {
+    this.errors.push(`no prefix parse function for ${tokenType} found`);
+  }
+
+  /**
+   * 解析表达式，支持优先级和中缀表达式递归处理。
+   * @param {number} precedence 当前表达式优先级
    * @returns {Expression | null}
    */
   parseExpression(precedence) {
     const prefix = this.prefixParseFns[this.curToken.type];
     if (!prefix) {
-      // 如果没有注册对应的前缀解析函数，直接返回 null
+      this.noPrefixParseFnError(this.curToken.type);
       return null;
     }
 
-    const leftExp = prefix();
+    let leftExp = prefix.call(this);
+    while (!this.peekTokenIs(TokenTypes.SEMICOLON) && precedence < this.peekPrecedence()) {
+      const infix = this.infixParseFns[this.peekToken.type];
+      if (!infix) {
+        return leftExp;
+      }
 
-    // TODO: 后续支持中缀解析时会在这里扩展
+      this.nextToken();
+      leftExp = infix.call(this, leftExp);
+    }
+
     return leftExp;
   }
 
@@ -201,6 +290,24 @@ export default class Parser {
    */
   parseIdentifier() {
     return new Identifier(this.curToken, this.curToken.literal);
+  }
+
+  /**
+   * @returns {IntegerLiteral | null}
+   */
+  parseIntegerLiteral() {
+    const lit = new IntegerLiteral(this.curToken);
+
+    const value = Number(this.curToken.literal);
+    if (Number.isNaN(value)) {
+      const msg = `could not parse ${this.curToken.literal} as integer`;
+      this.errors.push(msg);
+      return null;
+    }
+
+    lit.value = value;
+
+    return lit;
   }
 
   /**

@@ -237,3 +237,87 @@ export class ExpressionStatement {
     return '';
   }
 }
+
+export class IntegerLiteral {
+  /**
+   * @param {Token} token
+   */
+  constructor(token) {
+    /** @type {Token} */
+    this.token = token;
+
+    /** @type {number} */
+    this.value = 0; // 默认值，后续由解析器设置
+  }
+
+  /**
+   * 返回该表达式对应的词法字面量（例如 "5"）
+   * @returns {string}
+   */
+  tokenLiteral() {
+    return this.token.literal;
+  }
+
+  /**
+   * 将该节点转换为代码字符串表示（如 "5"）
+   * @returns {string}
+   */
+  toString() {
+    return this.token.literal;
+  }
+}
+
+/**
+ * 表示前缀表达式节点，如 `!5` 或 `-x`
+ */
+export class PrefixExpression {
+  /**
+   * @param {Token} token 前缀运算符的词法单元（如 '!'）
+   * @param {string} operator 运算符本身（如 '!' 或 '-'）
+   * @param {Expression} right 运算符右侧的表达式
+   */
+  constructor(token, operator, right = null) {
+    this.token = token;
+    this.operator = operator;
+    this.right = right;
+  }
+
+  /** @returns {string} 返回词法单元字面量（如 '!'） */
+  tokenLiteral() {
+    return this.token.literal;
+  }
+
+  /** @returns {string} 还原表达式源码字符串，如 `(!5)` */
+  toString() {
+    return `(${this.operator}${this.right?.toString() ?? ''})`;
+  }
+}
+
+/**
+ * 表示一个中缀表达式节点，如 "5 + 5"
+ */
+export class InfixExpression extends Expression {
+  /**
+   * @param {Token} token - 运算符的词法单元（如 "+"）
+   * @param {Expression} left - 左操作数表达式
+   * @param {string} operator - 运算符字符串（如 "+"）
+   * @param {Expression} right - 右操作数表达式
+   */
+  constructor(token, left, operator, right) {
+    super();
+    this.token = token;
+    this.left = left;
+    this.operator = operator;
+    this.right = right;
+  }
+
+  expressionNode() {}
+
+  tokenLiteral() {
+    return this.token.literal;
+  }
+
+  toString() {
+    return `(${this.left.toString()} ${this.operator} ${this.right.toString()})`;
+  }
+}

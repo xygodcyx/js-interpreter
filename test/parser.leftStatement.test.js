@@ -3,21 +3,7 @@
 import Program, { LetStatement } from '../src/ast.js';
 import Lexer from '../src/lexer.js';
 import Parser from '../src/parser.js';
-
-/**
- * 检查解析器是否存在错误。如果有，则打印错误并中止测试。
- * @param {Parser} parser
- */
-function checkParserErrors(parser) {
-  const errors = parser.Errors();
-  if (errors.length === 0) return;
-
-  console.error(`解析器共出现 ${errors.length} 个错误：`);
-  for (const msg of errors) {
-    console.error(`  解析器错误：${msg}`);
-  }
-  throw new Error('❌ 解析器存在错误，请检查日志输出');
-}
+import { checkParserErrors } from './helper.js';
 
 /**
  * 测试 ParseProgram 对 let 语句的解析能力。
