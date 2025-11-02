@@ -3,7 +3,7 @@
 import Lexer from '../src/lexer.js';
 import Parser from '../src/parser.js';
 import { ExpressionStatement, InfixExpression } from '../src/ast.js';
-import { checkParserErrors, testIntegerLiteral } from './helper.js';
+import { checkParserErrors, testLiteralExpression } from './helper.js';
 
 /**
  * 测试中缀表达式解析是否正确。
@@ -18,6 +18,8 @@ function testParsingInfixExpressions() {
     { input: '5 < 5;', leftValue: 5, operator: '<', rightValue: 5 },
     { input: '5 == 5;', leftValue: 5, operator: '==', rightValue: 5 },
     { input: '5 != 5;', leftValue: 5, operator: '!=', rightValue: 5 },
+    { input: 'true == true;', leftValue: true, operator: '==', rightValue: true },
+    { input: 'false == false;', leftValue: false, operator: '==', rightValue: false },
   ];
 
   for (const { input, leftValue, operator, rightValue } of tests) {
@@ -34,13 +36,15 @@ function testParsingInfixExpressions() {
       `program.statements does not contain 1 statement. got=${program.statements.length}`
     );
 
+    /**
+     * @type {ExpressionStatement}
+     */
     const stmt = program.statements[0];
     console.assert(
       stmt instanceof ExpressionStatement,
       `stmt is not ExpressionStatement. got=${stmt.constructor.name}`
     );
 
-    
     const exp = stmt.expression;
     console.assert(
       exp instanceof InfixExpression,
@@ -48,7 +52,7 @@ function testParsingInfixExpressions() {
     );
 
     console.assert(
-      testIntegerLiteral(exp.left, leftValue),
+      testLiteralExpression(console, exp.left, leftValue),
       `exp.left is not IntegerLiteral(${leftValue})`
     );
 
@@ -58,7 +62,7 @@ function testParsingInfixExpressions() {
     );
 
     console.assert(
-      testIntegerLiteral(exp.right, rightValue),
+      testLiteralExpression(console, exp.right, rightValue),
       `exp.right is not IntegerLiteral(${rightValue})`
     );
   }

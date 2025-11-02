@@ -3,49 +3,64 @@
 import Program, { LetStatement } from '../src/ast.js';
 import Lexer from '../src/lexer.js';
 import Parser from '../src/parser.js';
-import { checkParserErrors } from './helper.js';
+import { checkParserErrors, testLiteralExpression } from './helper.js';
 
 /**
  * 测试 ParseProgram 对 let 语句的解析能力。
  */
 function testLetStatements() {
-  const input = `
-let x = 5;
-let y = 10;
-let foobar = 838383;
-  `;
+  const inputs = [
+    {
+      input: "let x = 5;",
+      expectedIdentifier: "x",
+      expectedValue: 5
+    },
+    {
+      input: "let y = 10;",
+      expectedIdentifier: "y",
+      expectedValue: 10
+    },
+    {
+      input: "let foobar = 838383;",
+      expectedIdentifier: "foobar",
+      expectedValue: 838383
+    }
+  ]
+  inputs.forEach((test_input, i) => {
+    const input = test_input.input
+    const expectedIdentifier = test_input.expectedIdentifier
+    const expectedValue = test_input.expectedValue
 
-  const lexer = new Lexer(input);
-  const parser = new Parser(lexer);
+    const lexer = new Lexer(input);
+    const parser = new Parser(lexer);
 
-  /**
-   * @type {Program} 变量描述
-   */
-  const program = parser.parseProgram();
-  checkParserErrors(parser);
+    /**
+     * @type {Program} 变量描述
+     */
+    const program = parser.parseProgram();
+    checkParserErrors(parser);
 
-  console.assert(program !== null, 'ParseProgram() 返回了 null');
-  console.assert(
-    program.statements.length === 3,
-    `program.statements 不包含 3 个语句，实际为 ${program.statements.length}`
-  );
+    console.assert(program !== null, 'ParseProgram() 返回了 null');
+    console.assert(
+      program.statements.length === 1,
+      `program.statements 不包含 1 个语句，实际为 ${program.statements.length}`
+    );
 
-  /** @type {{ expectedIdentifier: string }[]} */
-  const tests = [
-    { expectedIdentifier: 'x' },
-    { expectedIdentifier: 'y' },
-    { expectedIdentifier: 'foobar' },
-  ];
-
-  for (let i = 0; i < tests.length; i++) {
-    const stmt = program.statements[i];
-    const ok = testLetStatement(stmt, tests[i].expectedIdentifier);
+    /**
+     * @type {LetStatement} 变量描述
+     */
+    const stmt = program.statements[0];
+    const ok = testLetStatement(stmt, expectedIdentifier);
     if (!ok) {
       return;
     }
-  }
+    const value = stmt.value
+    testLiteralExpression(console, value, expectedValue)
 
+  })
   console.log('✅ testLetStatements 测试通过！');
+
+
 }
 
 /**

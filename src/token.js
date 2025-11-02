@@ -41,7 +41,7 @@ export const TokenTypes = {
 };
 
 const keywords = {
-  fn: TokenTypes.FUNCTION,
+  func: TokenTypes.FUNCTION,
   let: TokenTypes.LET,
   if: TokenTypes.IF,
   else: TokenTypes.ELSE,

@@ -3,7 +3,7 @@
 import Lexer from '../src/lexer.js';
 import Parser from '../src/parser.js';
 import { ExpressionStatement, PrefixExpression } from '../src/ast.js';
-import { testIntegerLiteral } from './helper.js';
+import { testLiteralExpression } from './helper.js';
 
 /**
  * 测试整数文字表达式解析是否正确。
@@ -12,6 +12,8 @@ function testParsingPrefixExpressions() {
   const tests = [
     { input: '!5;', operator: '!', integerValue: 5 },
     { input: '-15;', operator: '-', integerValue: 15 },
+    { input: '!true;', operator: '!', integerValue: true },
+    { input: '!false;', operator: '!', integerValue: false },
   ];
 
   for (const { input, operator, integerValue } of tests) {
@@ -44,7 +46,7 @@ function testParsingPrefixExpressions() {
     );
 
     console.assert(
-      testIntegerLiteral(exp.right, integerValue),
+      testLiteralExpression(console, exp.right, integerValue),
       `exp.right is not integer literal with value ${integerValue}`
     );
   }

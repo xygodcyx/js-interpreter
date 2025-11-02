@@ -2,6 +2,10 @@
 import readline from 'node:readline';
 import Lexer from './lexer.js';
 import { TokenTypes } from './token.js';
+import Parser from './parser.js';
+import { checkParserErrors, printParserErrors } from '../test/helper.js';
+import Eval from './evaluator.js';
+import { BaseObject } from './object.js';
 
 const PROMPT = '>> ';
 
@@ -12,16 +16,30 @@ export function startRepl() {
     prompt: PROMPT,
   });
 
-  console.log('Welcome to the Monkey REPL (JavaScript version)');
+  console.log(`
+.__                  
+  ________ __|  |__   ____  __ __ 
+ / ____/  |  \  |  \ /  _ \|  |  \
+< <_|  |  |  /   Y  (  <_> )  |  /
+ \__   |____/|___|  /\____/|____/ 
+    |__|          \/           
+`)
+  console.log('Welcome to the Monkey REPL (JavaScript v20.1)');
   rl.prompt();
 
   rl.on('line', line => {
     const lexer = new Lexer(line);
-    console.log(line);
-    for (let tok = lexer.nextToken(); tok.type !== TokenTypes.EOF; tok = lexer.nextToken()) {
-      console.log(tok);
+    const parser = new Parser(lexer)
+    const program = parser.parseProgram()
+    if (parser.Errors().length !== 0) {
+      printParserErrors(console, parser.Errors())
+      rl.prompt()
+      return
     }
-
+    const evaluated = Eval(program)
+    if (evaluated) {
+      console.log(`${evaluated.Inspect()}`)
+    }
     rl.prompt();
   }).on('close', () => {
     console.log('Bye!');

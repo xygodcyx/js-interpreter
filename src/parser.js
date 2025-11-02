@@ -18,6 +18,11 @@ import Program, {
   IntegerLiteral,
   PrefixExpression,
   InfixExpression,
+  BooleanLiteral,
+  IfExpression,
+  BlockStatement,
+  FunctionLiteral,
+  CallExpression,
 } from './ast.js';
 import Lexer from './lexer.js';
 
@@ -40,6 +45,7 @@ export const precedences = {
   [TokenTypes.MINUS]: PrecedencesInt.SUM,
   [TokenTypes.SLASH]: PrecedencesInt.PRODUCT,
   [TokenTypes.ASTERISK]: PrecedencesInt.PRODUCT,
+  [TokenTypes.LPAREN]: PrecedencesInt.CALL,
 };
 /**
  * 解析器 Parser 类
@@ -73,9 +79,19 @@ export default class Parser {
     // 注册前缀解析函数
     this.registerPrefix(TokenTypes.IDENT, this.parseIdentifier.bind(this));
     this.registerPrefix(TokenTypes.INT, this.parseIntegerLiteral.bind(this));
+    this.registerPrefix(TokenTypes.TRUE, this.parseBoolean.bind(this));
+    this.registerPrefix(TokenTypes.FALSE, this.parseBoolean.bind(this));
 
     this.registerPrefix(TokenTypes.BANG, this.parsePrefixExpression.bind(this));
     this.registerPrefix(TokenTypes.MINUS, this.parsePrefixExpression.bind(this));
+
+    this.registerPrefix(TokenTypes.LPAREN, this.parseGroupedExpression.bind(this));
+
+    this.registerPrefix(TokenTypes.IF, this.parseIfExpression.bind(this));
+
+    this.registerPrefix(TokenTypes.FUNCTION, this.parseFunctionLiteral.bind(this));
+
+
 
     // 注册中缀解析函数
     this.registerInfix(TokenTypes.PLUS, this.parseInfixExpression.bind(this));
@@ -86,6 +102,9 @@ export default class Parser {
     this.registerInfix(TokenTypes.NOT_EQ, this.parseInfixExpression.bind(this));
     this.registerInfix(TokenTypes.LT, this.parseInfixExpression.bind(this));
     this.registerInfix(TokenTypes.GT, this.parseInfixExpression.bind(this));
+
+    this.registerInfix(TokenTypes.LPAREN, this.parseCallExpression.bind(this))
+
   }
 
   /**
@@ -198,41 +217,12 @@ export default class Parser {
   }
 
   /**
-   * 解析前缀表达式，如 -5
-   * @returns {Expression}
-   */
-  parsePrefixExpression() {
-    const expression = new PrefixExpression(this.curToken, this.curToken.literal);
-
-    this.nextToken();
-
-    expression.right = this.parseExpression(PrecedencesInt.PREFIX);
-
-    return expression;
-  }
-
-  /**
-   * 解析中缀表达式，如 5 + 5
-   * @param {Expression} left 左侧表达式
-   * @returns {Expression}
-   */
-  parseInfixExpression(left) {
-    const expression = new InfixExpression(this.curToken, left, this.curToken.literal);
-
-    const precedence = this.curPrecedence();
-    this.nextToken();
-    expression.right = this.parseExpression(precedence);
-
-    return expression;
-  }
-
-  /**
    *@param {string} tokenType
    */
   noPrefixParseFnError(tokenType) {
     this.errors.push(`no prefix parse function for ${tokenType} found`);
   }
-
+  // a + b * c + d / e - f
   /**
    * 解析表达式，支持优先级和中缀表达式递归处理。
    * @param {number} precedence 当前表达式优先级
@@ -260,6 +250,171 @@ export default class Parser {
   }
 
   /**
+   * 解析中缀表达式，如 5 + 5
+   * @param {Expression} left 左侧表达式
+   * @returns {Expression}
+   */
+  parseInfixExpression(left) {
+    const expression = new InfixExpression(this.curToken, left, this.curToken.literal);
+
+    const precedence = this.curPrecedence();
+    this.nextToken();
+    expression.right = this.parseExpression(precedence);
+
+    return expression;
+  }
+
+  /**
+   * 解析前缀表达式，如 -5
+   * @returns {Expression}
+   */
+  parsePrefixExpression() {
+    const expression = new PrefixExpression(this.curToken, this.curToken.literal);
+
+    this.nextToken();
+
+    expression.right = this.parseExpression(PrecedencesInt.PREFIX);
+
+    return expression;
+  }
+
+  /**
+   * 解析分组表达式,如 (1 + 1）* 2
+   * @returns {Expression}
+   */
+  parseGroupedExpression() {
+    this.nextToken();
+    const exp = this.parseExpression(PrecedencesInt.LOWEST);
+    if (!this.expectPeek(TokenTypes.RPAREN)) {
+      return null;
+    }
+    return exp;
+  }
+
+  /**
+   * 解析IF表达式,如 if (x > y)
+   * @returns {Expression}
+   */
+  parseIfExpression() {
+    const expression = new IfExpression(this.curToken)
+    if (!this.expectPeek(TokenTypes.LPAREN)) {
+      return null
+    }
+    this.nextToken()
+    expression.condition = this.parseExpression(PrecedencesInt.LOWEST)
+    if (!this.expectPeek(TokenTypes.RPAREN)) {
+      return null
+    }
+    if (!this.expectPeek(TokenTypes.LBRACE)) {
+      return null
+    }
+    expression.consequence = this.parseBlockStatement()
+
+    if (this.peekTokenIs(TokenTypes.ELSE)) {
+      this.nextToken()
+      if (!this.expectPeek(TokenTypes.LBRACE)) {
+        return null
+      }
+      expression.alternative = this.parseBlockStatement()
+    }
+    return expression
+  }
+
+  /**
+   * 解析Function字面量,如 fn (a,b)
+   * @returns {FunctionLiteral}
+   */
+  parseFunctionLiteral() {
+    const lit = new FunctionLiteral(this.curToken)
+    if (!this.expectPeek(TokenTypes.LPAREN)) {
+      return null
+    }
+    lit.params = this.parseFunctionParameters()
+    if (!this.expectPeek(TokenTypes.LBRACE)) {
+      return null
+    }
+    lit.body = this.parseBlockStatement()
+    return lit
+  }
+
+  /**
+   * 解析Function参数列表,如 (a,b)
+   * @returns {Identifier[]}
+   */
+  parseFunctionParameters() {
+    const identifiers = []
+    if (this.peekTokenIs(TokenTypes.RPAREN)) {
+      this.nextToken()
+      return identifiers
+    }
+    this.nextToken()
+
+    identifiers.push(new Identifier(this.curToken, this.curToken.literal))
+    while (this.peekTokenIs(TokenTypes.COMMA)) {
+      this.nextToken()
+      this.nextToken()
+      const ident = new Identifier(this.curToken, this.curToken.literal)
+      identifiers.push(ident)
+    }
+    if (!this.expectPeek(TokenTypes.RPAREN)) {
+      return null
+    }
+
+    return identifiers
+  }
+
+  /**
+ * 解析大括号语句,如 { x }
+ * @returns {BlockStatement}
+ */
+  parseBlockStatement() {
+    const block = new BlockStatement(this.curToken)
+    block.statements = []
+    this.nextToken()
+    while (!this.curTokenIs(TokenTypes.RBRACE) && !this.curTokenIs(TokenTypes.EOF)) {
+      var stmt = this.parseStatement()
+      if (stmt != null) {
+        block.statements.push(stmt)
+      }
+      this.nextToken()
+    }
+    return block
+  }
+
+  /**
+ * 解析调用表达式语句,如 add()
+ * @returns {CallExpression}
+ */
+  parseCallExpression(func) {
+    const exp = new CallExpression(this.curToken, func)
+    exp.arguments = this.parseCallArguments()
+    return exp
+  }
+
+  /**
+* 解析调用表达式语句的参数列表,如 add(1,2*3,4+5)中的1,2*3,4+5
+* @returns {Expression[]}
+*/
+  parseCallArguments() {
+    const args = []
+    if (this.peekTokenIs(TokenTypes.RPAREN)) {
+      this.nextToken()
+      return args
+    }
+    this.nextToken()
+    args.push(this.parseExpression(PrecedencesInt.LOWEST))
+    while (this.peekTokenIs(TokenTypes.COMMA)) {
+      this.nextToken()
+      this.nextToken()
+      args.push(this.parseExpression(PrecedencesInt.LOWEST))
+    }
+    if (!this.expectPeek(TokenTypes.RPAREN)) {
+      return null
+    }
+    return args
+  }
+
+  /**
    * 解析 let 语句
    * @returns {LetStatement | null}
    */
@@ -276,9 +431,12 @@ export default class Parser {
       return null;
     }
 
-    // 跳过对表达式的处理，直到分号
-    while (!this.curTokenIs(TokenTypes.SEMICOLON)) {
-      this.nextToken();
+    this.nextToken()
+
+    stmt.value = this.parseExpression(PrecedencesInt.LOWEST)
+
+    if (this.peekTokenIs(TokenTypes.SEMICOLON)) {
+      this.nextToken()
     }
 
     return stmt;
@@ -319,12 +477,20 @@ export default class Parser {
 
     this.nextToken();
 
-    // TODO：暂不处理表达式，跳过直到遇到分号
-    while (!this.curTokenIs(TokenTypes.SEMICOLON)) {
-      this.nextToken();
+    stmt.returnValue = this.parseExpression(PrecedencesInt.LOWEST)
+
+    if (this.peekTokenIs(TokenTypes.SEMICOLON)) {
+      this.nextToken()
     }
 
     return stmt;
+  }
+  /**
+   * 解析 boolean 字面量
+   * @returns {BooleanLiteral}
+   */
+  parseBoolean() {
+    return new BooleanLiteral(this.curToken, this.curTokenIs(TokenTypes.TRUE));
   }
 
   /**

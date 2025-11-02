@@ -98,7 +98,7 @@ export class LetStatement extends Statement {
   /**
    * 标识此为语句节点
    */
-  statementNode() {}
+  statementNode() { }
 
   /**
    * 返回该语句的 token 字面量（'let'）
@@ -144,14 +144,14 @@ export class Identifier extends Expression {
   /**
    * 标识此为表达式节点
    */
-  expressionNode() {}
+  expressionNode() { }
 
   /**
    * 返回该标识符的原始字面量（变量名）
    * @returns {string}
    */
   tokenLiteral() {
-    return this.token.literal;
+    return `${this.token.literal}`;
   }
 
   toString() {
@@ -175,7 +175,7 @@ export class ReturnStatement {
   /**
    * 表示这是一个语句节点（空方法，用于类型标识）
    */
-  statementNode() {}
+  statementNode() { }
 
   /**
    * 返回 token 的字面量
@@ -228,7 +228,7 @@ export class ExpressionStatement {
    * 为了统一接口，表示这是一个语句（Statement）。
    * 没有实际用途，只为兼容结构。
    */
-  statementNode() {}
+  statementNode() { }
 
   toString() {
     if (this.expression) {
@@ -311,7 +311,7 @@ export class InfixExpression extends Expression {
     this.right = right;
   }
 
-  expressionNode() {}
+  expressionNode() { }
 
   tokenLiteral() {
     return this.token.literal;
@@ -319,5 +319,214 @@ export class InfixExpression extends Expression {
 
   toString() {
     return `(${this.left.toString()} ${this.operator} ${this.right.toString()})`;
+  }
+}
+
+/**
+ * 表示布尔值字面量的 AST 节点（如 true/false）
+ * @extends Expression
+ */
+export class BooleanLiteral {
+  /**
+   * 创建布尔值节点
+   * @param {Token} token - 布尔值的 token（类型应为 'TRUE' 或 'FALSE'）
+   * @param {boolean} value - 布尔值
+   */
+  constructor(token, value) {
+    this.token = token;
+    this.value = value;
+  }
+
+  /**
+   * 标识此为表达式节点
+   */
+  expressionNode() { }
+
+  /**
+   * 返回 token 的字面量（'true' 或 'false'）
+   * @returns {string}
+   */
+  tokenLiteral() {
+    return this.token.literal;
+  }
+
+  /**
+   * 返回布尔值的字符串表示（'true' 或 'false'）
+   * @returns {string}
+   */
+  toString() {
+    return this.token.literal;
+  }
+}
+
+/**
+ * if 条件表达式节点
+ * @extends Expression
+ */
+export class IfExpression extends Expression {
+  /**
+   * 创建 if 表达式节点
+   * @param {Token} token - 'if' 关键词的 token
+   * @param {Expression} condition - 条件表达式
+   * @param {BlockStatement} consequence - 条件为真时的语句块
+   * @param {BlockStatement | null} alternative - else 语句块（可选）
+   */
+  constructor(token, condition, consequence, alternative = null) {
+    super()
+    this.token = token;
+    this.condition = condition;
+    this.consequence = consequence;
+    this.alternative = alternative;
+  }
+
+  /**
+   * 标识此为表达式节点
+   */
+  expressionNode() { }
+
+  /**
+   * 返回 if 关键词的字面量
+   * @returns {string}
+   */
+  tokenLiteral() {
+    return this.token.literal;
+  }
+
+  /**
+   * 返回 if 表达式的字符串表示
+   * @returns {string}
+   */
+  toString() {
+    let out = `if${this.condition.toString()}${this.consequence.toString()}`;
+
+    if (this.alternative !== null) {
+      out += `else${this.alternative.toString()}`;
+    }
+
+    return out;
+  }
+}
+
+/**
+ * 语句块节点
+ * @extends Statement
+ */
+export class BlockStatement extends Statement {
+  /**
+   * 创建语句块节点
+   * @param {Token} token - '{' 词法单元
+   */
+  constructor(token) {
+    super()
+    this.token = token;
+    /** @type {Statement[]} */
+    this.statements = [];
+  }
+
+  /**
+   * 标识此为语句节点
+   */
+  statementNode() { }
+
+  /**
+   * 返回语句块的 token 字面量
+   * @returns {string}
+   */
+  tokenLiteral() {
+    return this.token.literal;
+  }
+
+  /**
+   * 返回语句块的字符串表示
+   * @returns {string}
+   */
+  toString() {
+    let out = ""
+    out += "{\n"
+    out += this.statements.map(s => s.toString()).join('')
+    out += "\n}"
+    return out
+  }
+}
+
+
+export class FunctionLiteral extends Expression {
+  /**
+   * 创建 fn 表达式节点
+   * @param {Token} token - fn 关键词的 token
+   * @param {Identifier[]} params - 函数参数
+   * @param {BlockStatement} body - 函数块
+   */
+  constructor(token, params, body) {
+    super()
+    this.token = token;
+    this.params = params;
+    this.body = body;
+  }
+
+  /**
+   * 标识此为表达式节点
+   */
+  expressionNode() { }
+
+  /**
+   * 返回 fn 关键词的字面量
+   * @returns {string}
+   */
+  tokenLiteral() {
+    return this.token.literal;
+  }
+
+  /**
+   * 返回 fn 表达式的字符串表示
+   * @returns {string}
+   */
+  toString() {
+    let out = `${this.tokenLiteral()} (${this.params.join(",")})\n`;
+    if (this.body !== null) {
+      out += `${this.body.toString()}`;
+    }
+    return out;
+  }
+}
+
+/**
+ * Call Expression
+ * @extends Expression
+ */
+export class CallExpression extends Expression {
+  /**
+   * 创建 fn 表达式节点
+   * @param {Token} token - fn 关键词的 token
+   * @param {Expression} func - 要调用的函数
+   * @param {Expression[]} args - 传入给函数的实参
+   */
+  constructor(token, func, args) {
+    super()
+    this.token = token;
+    this.function = func;
+    this.arguments = args;
+  }
+
+  /**
+   * 标识此为表达式节点
+   */
+  expressionNode() { }
+
+  /**
+   * 返回 call 的字面量
+   * @returns {string}
+   */
+  tokenLiteral() {
+    return this.token.literal;
+  }
+
+  /**
+   * 返回 call 表达式的字符串表示
+   * @returns {string}
+   */
+  toString() {
+    let out = `${this.function.toString()}(${this.arguments.join(", ")})`;
+    return out;
   }
 }
