@@ -5,15 +5,16 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "start":"node src/main.js",
-    "test": "node test/run.js"
+    "repl": "bun src/main.js",
+    "test": "bun test/run.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.10.0",
   "dependencies": {
-    "glob": "^11.0.2"
+    "glob": "^11.0.2",
+    "prompt-sync": "^4.2.0"
   },
   "devDependencies": {}
 }
