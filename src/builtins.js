@@ -1,11 +1,5 @@
-import { newEnvironment } from './environment';
-import Eval, {
-    applyFunction,
-    evalExpressions,
-    newError,
-    SingleObjectInstance,
-    unwrapReturnValue,
-} from './evaluator';
+import readline from 'node:readline';
+import { applyFunction, newError, SingleObjectInstance } from './evaluator.js';
 import {
     ArrayObject,
     BaseObject,
@@ -14,11 +8,7 @@ import {
     FunctionObject,
     IntegerObj,
     StringObj,
-} from './object';
-import PromptSync from 'prompt-sync';
-import { rl } from './repl';
-
-const prompt = PromptSync();
+} from './object.js';
 
 export const builtins = {
     len: new BuiltinObject(builtinLen),
@@ -32,6 +22,7 @@ export const builtins = {
     pop_arr: new BuiltinObject(builtinPopArr),
     each: new BuiltinObject(builtinEach),
     input: new BuiltinObject(builtinInput),
+    randi: new BuiltinObject(builtinRandi),
 };
 
 /**
@@ -154,7 +145,7 @@ function builtinInt(args) {
         return newError(`argument to interval[str] not supported, got ${obj.Type()}`);
     }
     const n = parseInt(obj.value);
-    console.log(n)
+    console.log(n);
     if (isNaN(n)) return new newError('invalid int');
     return new IntegerObj(n);
 }
@@ -291,6 +282,10 @@ async function builtinInput(args) {
         return newError(`wrong number of arguments. got=${args.length}, want <= 1`);
     }
     const text = args[0]?.value || 'User Input: ';
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
     return new Promise(resolve => {
         pendingInputResolve = userInput => {
             pendingInputResolve = null;
@@ -300,6 +295,24 @@ async function builtinInput(args) {
             if (pendingInputResolve) {
                 pendingInputResolve(answer);
             }
+            rl.close();
         });
     });
+}
+/**
+ * 随机整数函数
+ * @param {BaseObject[]} args 参数列表
+ */
+function builtinRandi(args) {
+    if (args.length !== 2) {
+        return newError(`wrong number of arguments. got=${args.length}, want = 2`);
+    }
+    const start = args[0];
+    const end = args[1];
+    if (!(start instanceof IntegerObj && end instanceof IntegerObj)) {
+        return newError(`argument to randi[start end] not supported, got ${obj.Type()}`);
+    }
+
+    const random = Math.floor(Math.random() * (end.value - start.value + 1)) + start.value;
+    return new IntegerObj(random)
 }

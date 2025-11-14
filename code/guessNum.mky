@@ -1,4 +1,4 @@
-let right = 10;
+let right = randi(0,100);
 let guess_count = 0;
 while(true){
     let guess = int(input("请你猜一个数字"));
@@ -8,9 +8,9 @@ while(true){
     }else{
         if (guess == right) {
             print("猜对了");
-            
             print("你一共猜了: ", guess_count, "次");
             guess_count = 0;
+            right = randi(0,100)
         } else {
             print("猜小了");
         };

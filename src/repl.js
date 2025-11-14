@@ -1,12 +1,11 @@
 // repl.js
 import readline from 'node:readline';
 import Lexer from './lexer.js';
-import { TokenTypes } from './token.js';
 import Parser from './parser.js';
-import { checkParserErrors, printParserErrors } from '../test/helper.js';
+import { printParserErrors } from '../test/helper.js';
 import Eval, { globalEnv } from './evaluator.js';
-import { BaseObject, ObjectType } from './object.js';
-import { newEnvironment } from './environment.js';
+import { ObjectType } from './object.js';
+import os from 'node:os';
 
 const PROMPT = '>> ';
 /**
@@ -14,6 +13,9 @@ const PROMPT = '>> ';
  */
 export let rl;
 export async function startRepl() {
+    const userInfo = os.userInfo();
+    console.log(`Hello ${userInfo.username}! This is the Monkey programming language!`);
+    console.log('Feel free to type in commands');
     rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,

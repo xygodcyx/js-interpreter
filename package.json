@@ -1,5 +1,5 @@
 {
-  "name": "js-interpreter",
+  "name": "monkey-js-interpreter",
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
@@ -8,13 +8,17 @@
     "repl": "bun src/main.js",
     "test": "bun test/run.js"
   },
-  "keywords": [],
+  "bin": {
+    "monkey": "./bin/monkey.js"
+  },
+  "keywords": [
+    "monkey",
+    "interpreter",
+    "repl"
+  ],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.10.0",
-  "dependencies": {
-    "glob": "^11.0.2",
-    "prompt-sync": "^4.2.0"
-  },
+  "dependencies": {},
   "devDependencies": {}
 }
