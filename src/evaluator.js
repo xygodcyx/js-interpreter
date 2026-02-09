@@ -328,8 +328,12 @@ function evalIntegerInfixExpression(operator, left, right) {
             return new IntegerObj(leftValue / rightValue);
         case '>':
             return nativeBoolToBooleanObject(leftValue > rightValue);
+        case '>=':
+            return nativeBoolToBooleanObject(leftValue >= rightValue);
         case '<':
             return nativeBoolToBooleanObject(leftValue < rightValue);
+        case '<=':
+            return nativeBoolToBooleanObject(leftValue <= rightValue);
         case '==':
             return nativeBoolToBooleanObject(leftValue === rightValue);
         case '!=':

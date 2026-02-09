@@ -14,6 +14,7 @@ let add = fn(x, y) {
 let result = add(five, ten);
 !+-*/
 5>3 3<5
+3>=3 5<=10
 
 if (5 < 10) {
     return true;
@@ -85,6 +86,13 @@ while
         { expectedType: TokenTypes.INT, expectedLiteral: '3' },
         { expectedType: TokenTypes.LT, expectedLiteral: '<' },
         { expectedType: TokenTypes.INT, expectedLiteral: '5' },
+        { expectedType: TokenTypes.INT, expectedLiteral: '3' },
+        { expectedType: TokenTypes.GT_EQ, expectedLiteral: '>=' },
+        { expectedType: TokenTypes.INT, expectedLiteral: '3' },
+
+        { expectedType: TokenTypes.INT, expectedLiteral: '5' },
+        { expectedType: TokenTypes.LT_EQ, expectedLiteral: '<=' },
+        { expectedType: TokenTypes.INT, expectedLiteral: '10' },
 
         { expectedType: TokenTypes.IF, expectedLiteral: 'if' },
         { expectedType: TokenTypes.LPAREN, expectedLiteral: '(' },

@@ -5,14 +5,15 @@ while(true){
     guess_count = guess_count + 1;
     if(guess > right){
         print("猜大了");
-    }else{
+    }
+    else{
         if (guess == right) {
-            print("猜对了");
-            print("你一共猜了: ", guess_count, "次");
-            guess_count = 0;
-            right = randi(0,100)
-        } else {
-            print("猜小了");
-        };
+        print("猜对了");
+        print("你一共猜了: ", guess_count, "次");
+        guess_count = 0;
+        right = randi(0,100)
+    } else {
+        print("猜小了");
     };
+    }
 };

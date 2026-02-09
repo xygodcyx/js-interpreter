@@ -18,7 +18,9 @@ export const TokenTypes = {
     // 比较符
     BANG: '!',
     GT: '>',
+    GT_EQ: '>=',
     LT: '<',
+    LT_EQ: '<=',
     EQ: '==',
     NOT_EQ: '!=',
 
@@ -47,7 +49,7 @@ export const TokenTypes = {
 const keywords = {
     func: TokenTypes.FUNCTION,
     fn: TokenTypes.FUNCTION,
-    while : TokenTypes.WHILE,
+    while: TokenTypes.WHILE,
     let: TokenTypes.LET,
     if: TokenTypes.IF,
     else: TokenTypes.ELSE,

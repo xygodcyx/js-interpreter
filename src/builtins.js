@@ -312,7 +312,6 @@ function builtinRandi(args) {
     if (!(start instanceof IntegerObj && end instanceof IntegerObj)) {
         return newError(`argument to randi[start end] not supported, got ${obj.Type()}`);
     }
-
     const random = Math.floor(Math.random() * (end.value - start.value + 1)) + start.value;
-    return new IntegerObj(random)
+    return new IntegerObj(random);
 }

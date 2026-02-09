@@ -1,2 +1,4 @@
-let hello_world = "hello world"
-print(hello_world)
+let sayHello = func(name){
+    print("hi: " + name)
+}
+sayHello("quhou")

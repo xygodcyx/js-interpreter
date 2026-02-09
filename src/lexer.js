@@ -83,10 +83,20 @@ export default class Lexer {
                 }
                 break;
             case '<':
-                tok = new Token(TokenTypes.LT, this.ch);
+                if (this.peekChar() === '=') {
+                    tok = new Token(TokenTypes.LT_EQ, this.ch + '=');
+                    this.readChar();
+                } else {
+                    tok = new Token(TokenTypes.LT, this.ch);
+                }
                 break;
             case '>':
-                tok = new Token(TokenTypes.GT, this.ch);
+                if (this.peekChar() === '=') {
+                    tok = new Token(TokenTypes.GT_EQ, this.ch + '=');
+                    this.readChar();
+                } else {
+                    tok = new Token(TokenTypes.GT, this.ch);
+                }
                 break;
             case '(':
                 tok = new Token(TokenTypes.LPAREN, this.ch);

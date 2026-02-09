@@ -9,7 +9,7 @@ const args = process.argv.slice(2);
 if (args.length === 0) {
     startRepl();
 } else if (args.length === 1) {
-    const filePath = args[0];
+    const filePath = args[0];   
     runMonkey(filePath);
 } else {
     console.error('Usage: monkey [filePath]');
